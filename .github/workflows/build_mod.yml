@@ -17,18 +17,11 @@ jobs:
 
       - name: Build Geode Mod for Windows
         uses: geode-sdk/build-geode-mod@main
-        id: build-step-windows  # Даём шагу ID для ссылки
         with:
           target: Win64
           combine: true
-
-      - name: Rename Windows artifact
-        # Переименовываем файл, чтобы его имя было уникальным
-        run: |
-          # Сначала находим и выводим путь к артефакту для отладки
-          echo "Artifact path from step: ${{ steps.build-step-windows.outputs.artifact-path }}"
-          # Переименовываем файл, добавляя уникальный префикс
-          mv "${{ steps.build-step-windows.outputs.artifact-path }}" "${{ steps.build-step-windows.outputs.artifact-path }}.renamed"
+          # Явно задаем уникальное имя артефакту для Windows
+          artifact-name: geode-artifact-Win64
 
   build-android:
     strategy:
@@ -45,6 +38,8 @@ jobs:
         with:
           target: ${{ matrix.target }}
           combine: true
+          # Артефакты Android также получат уникальные имена с подстановкой target
+          artifact-name: geode-artifact-${{ matrix.target }}
 
   combine-all:
     needs: [build-windows, build-android]
@@ -58,3 +53,5 @@ jobs:
         uses: geode-sdk/build-geode-mod@main
         with:
           combine: true
+          # Экшен автоматически найдет все артефакты от заданий в 'needs',
+          # так как они были созданы с помощью этого же экшена.
