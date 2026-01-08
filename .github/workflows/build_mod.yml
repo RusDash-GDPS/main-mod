@@ -15,7 +15,7 @@ jobs:
     # Сборка под каждую платформу проходит параллельно
     strategy:
       matrix:
-        target: [ Win64, MacOS, Android64, Android32 ]
+        target: [ Win64, Android64, Android32 ]
     runs-on: ubuntu-latest
     name: Build for ${{ matrix.target }}
 
