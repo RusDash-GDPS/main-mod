@@ -47,31 +47,17 @@ jobs:
           target: ${{ matrix.target }}
           combine: true
 
-  combine-all:
-    needs: [build-windows, build-android]
-    runs-on: ubuntu-latest
-    name: Combine into universal .geode file
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+combine-all:
+  needs: [build-windows, build-android]
+  runs-on: ubuntu-latest
+  name: Combine into universal .geode file
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Download Windows artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: geode-build-Win64
-          path: ./artifacts
-
-      - name: Download Android artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: geode-build
-          path: ./artifacts
-          pattern: geode-build-*
-          merge-multiple: true
-
-      - name: Combine all platforms
-        uses: geode-sdk/build-geode-mod@main
-        with:
-          path: ./artifacts
-          combine: true
-          target: Win64
+    # Ключевой шаг: скачиваем ВСЕ артефакты с помощью встроенной магии экшена
+    - name: Download all artifacts automatically
+      uses: geode-sdk/build-geode-mod@main
+      with:
+        combine: true
+        # Параметр `path` удалён. Экшен сам найдет нужные артефакты по зависимостям (needs).
