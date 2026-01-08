@@ -1,0 +1,42 @@
+name: Build Geode Mod
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-combine:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64
+
+    - name: Build for Windows
+      run: |
+        curl -L https://github.com/geode-sdk/cli/releases/latest/download/geode-cli-linux -o geode
+        chmod +x geode
+        ./geode build --target Win64 --output ./build/win
+
+    - name: Build for Android 64-bit
+      run: |
+        ./geode build --target Android64 --output ./build/android64
+
+    - name: Build for Android 32-bit
+      run: |
+        ./geode build --target Android32 --output ./build/android32
+
+    - name: Combine platforms
+      run: |
+        ./geode combine --input ./build --output ./combined-mod.geode
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: geode-mod
+        path: ./combined-mod.geode
