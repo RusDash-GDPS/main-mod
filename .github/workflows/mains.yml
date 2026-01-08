@@ -1,0 +1,54 @@
+name: Build Geode Mod
+
+on:
+  # Запускается при создании нового релиза (рекомендуемый способ)
+  release:
+    types: [published]
+  # ИЛИ запускается при отправке изменений в главную ветку
+  # push:
+  #   branches: [ main ]
+
+jobs:
+  build-and-combine:
+    runs-on: ubuntu-latest
+    strategy:
+      # Запускаем несколько сборок параллельно для каждой платформы
+      matrix:
+        target: [Win64, MacOS, Android64, Android32]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Geode Mod
+        uses: geode-sdk/build-geode-mod@main
+        id: build
+        with:
+          # Указываем платформу из матрицы
+          target: ${{ matrix.target }}
+          # Ключевой параметр: разрешаем последующее объединение
+          combine: true
+          # Устанавливаем конфигурацию сборки
+          build-config: 'RelWithDebInfo'
+
+  combine:
+    runs-on: ubuntu-latest
+    # Этот шаг запустится только после успешного завершения всех сборок выше
+    needs: build-and-combine
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Combine artifacts into a single .geode file
+        uses: geode-sdk/build-geode-mod@main
+        with:
+          # Указываем путь к скачанным артефактам сборки
+          path: ./artifacts
+          # Экшен понимает, что здесь нужно только объединить
+          combine: true
+          # Указываем целевую платформу (значение может быть любым, но параметр обязателен)
+          target: Win64
