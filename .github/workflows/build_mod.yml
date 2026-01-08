@@ -8,41 +8,70 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-all-platforms:
-    runs-on: ubuntu-latest
-    strategy:
-      # Ваш актуальный список платформ: Win64 и две версии Android
-      matrix:
-        target: [ Win64, Android64, Android32 ]
-    name: Build for ${{ matrix.target }}
-
+  build-windows:
+    runs-on: windows-latest
+    name: Build for Win64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build Geode Mod
+      - name: Build Geode Mod for Windows
         uses: geode-sdk/build-geode-mod@main
-        id: build
+        id: build-win
+        with:
+          target: Win64
+          combine: true
+
+      - name: Upload Windows build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: geode-build-Win64
+          path: |
+            **/*.geode
+            !**/*-combined.geode
+
+  build-android:
+    strategy:
+      matrix:
+        target: [ Android64, Android32 ]
+    runs-on: ubuntu-latest
+    name: Build for ${{ matrix.target }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Geode Mod for Android
+        uses: geode-sdk/build-geode-mod@main
+        id: build-android
         with:
           target: ${{ matrix.target }}
-          combine: true # Ключевой параметр для последующего объединения
+          combine: true
 
-  combine-platforms:
-    needs: [build-all-platforms]  # Ждем завершения сборки всех платформ
+  combine-all:
+    needs: [build-windows, build-android]
     runs-on: ubuntu-latest
     name: Combine into universal .geode file
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download all build artifacts
+      - name: Download Windows artifact
         uses: actions/download-artifact@v4
         with:
+          name: geode-build-Win64
           path: ./artifacts
 
-      - name: Combine artifacts
+      - name: Download Android artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: geode-build
+          path: ./artifacts
+          pattern: geode-build-*
+          merge-multiple: true
+
+      - name: Combine all platforms
         uses: geode-sdk/build-geode-mod@main
         with:
           path: ./artifacts
           combine: true
-          target: Win64 # Значение может быть любым, параметр обязателен
+          target: Win64
