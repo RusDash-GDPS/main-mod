@@ -15,31 +15,46 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build Geode Mod for Windows
-        uses: geode-sdk/build-geode-mod@main
+      - name: Build for Windows (Win64)
+        # ВАЖНО: Используем конкретную версию экшена для стабильности
+        uses: geode-sdk/build-geode-mod@v5
         with:
           target: Win64
-          combine: true
-          # Явно задаем уникальное имя артефакту для Windows
-          artifact-name: geode-artifact-Win64
+          # Сохраняем результат в отдельную папку с уникальным именем
+          output-path: ./artifacts/Win64
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact-windows
+          path: ./artifacts/Win64/
+          # Если в папке несколько файлов, загрузится только .geode
+          retention-days: 1
 
   build-android:
     strategy:
       matrix:
         target: [ Android64, Android32 ]
     runs-on: ubuntu-latest
-    name: Build for ${{ matrix.target }}
+    name: Build for Android (${{ matrix.target }})
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build Geode Mod for Android
-        uses: geode-sdk/build-geode-mod@main
+      - name: Build for Android
+        uses: geode-sdk/build-geode-mod@v5
         with:
           target: ${{ matrix.target }}
-          combine: true
-          # Артефакты Android также получат уникальные имена с подстановкой target
-          artifact-name: geode-artifact-${{ matrix.target }}
+          # Сохраняем каждый Android-билд в свою уникальную папку
+          output-path: ./artifacts/${{ matrix.target }}
+
+      - name: Upload Android Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          # Имя артефакта включает target, чтобы избежать конфликта
+          name: artifact-${{ matrix.target }}
+          path: ./artifacts/${{ matrix.target }}/
+          retention-days: 1
 
   combine-all:
     needs: [build-windows, build-android]
@@ -49,9 +64,31 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download and combine artifacts
-        uses: geode-sdk/build-geode-mod@main
+      - name: Download all platform artifacts
+        # Скачиваем все артефакты в одну общую папку
+        uses: actions/download-artifact@v4
+        with:
+          path: ./downloaded_artifacts
+          # merge-multiple объединяет артефакты из разных заданий
+          merge-multiple: true
+
+      - name: List downloaded files (for debugging)
+        run: ls -la ./downloaded_artifacts
+
+      - name: Combine artifacts into one .geode file
+        # Финальный шаг: передаем скачанные файлы на объединение
+        uses: geode-sdk/build-geode-mod@v5
         with:
           combine: true
-          # Экшен автоматически найдет все артефакты от заданий в 'needs',
-          # так как они были созданы с помощью этого же экшена.
+          # Указываем путь к папке, где лежат все скачанные .geode файлы
+          path: ./downloaded_artifacts
+
+      - name: Upload Universal Geode Mod
+        uses: actions/upload-artifact@v4
+        with:
+          name: universal-geode-mod
+          path: |
+            # Шаблон для поиска итогового объединенного файла
+            **/*-combined.geode
+            **/*.geode
+          retention-days: 7
