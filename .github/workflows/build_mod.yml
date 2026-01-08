@@ -17,18 +17,9 @@ jobs:
 
       - name: Build Geode Mod for Windows
         uses: geode-sdk/build-geode-mod@main
-        id: build-win
         with:
           target: Win64
           combine: true
-
-      - name: Upload Windows build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: geode-build-Win64
-          path: |
-            **/*.geode
-            !**/*-combined.geode
 
   build-android:
     strategy:
@@ -42,22 +33,19 @@ jobs:
 
       - name: Build Geode Mod for Android
         uses: geode-sdk/build-geode-mod@main
-        id: build-android
         with:
           target: ${{ matrix.target }}
           combine: true
 
-combine-all:
-  needs: [build-windows, build-android]
-  runs-on: ubuntu-latest
-  name: Combine into universal .geode file
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+  combine-all:
+    needs: [build-windows, build-android]
+    runs-on: ubuntu-latest
+    name: Combine into universal .geode file
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    # Ключевой шаг: скачиваем ВСЕ артефакты с помощью встроенной магии экшена
-    - name: Download all artifacts automatically
-      uses: geode-sdk/build-geode-mod@main
-      with:
-        combine: true
-        # Параметр `path` удалён. Экшен сам найдет нужные артефакты по зависимостям (needs).
+      - name: Download and combine artifacts
+        uses: geode-sdk/build-geode-mod@main
+        with:
+          combine: true
