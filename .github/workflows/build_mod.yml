@@ -20,6 +20,12 @@ jobs:
         with:
           target: Win64
           combine: true
+        # Явно задаем уникальное имя артефакту для Windows
+        id: build-win
+
+      - name: Rename Windows artifact
+        run: |
+          mv ${{ steps.build-win.outputs.artifact-path }} ${{ steps.build-win.outputs.artifact-path/Win64.geode/.Win64.geode }}
 
   build-android:
     strategy:
@@ -36,6 +42,8 @@ jobs:
         with:
           target: ${{ matrix.target }}
           combine: true
+        # Артефакты для Android автоматически получат имена с суффиксом target
+        id: build-android
 
   combine-all:
     needs: [build-windows, build-android]
@@ -49,3 +57,4 @@ jobs:
         uses: geode-sdk/build-geode-mod@main
         with:
           combine: true
+          # Экшен автоматически найдет все артефакты от заданий в 'needs'
