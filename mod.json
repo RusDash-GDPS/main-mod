@@ -1,0 +1,40 @@
+{
+  "geode": "4.10.0",
+  "early-load": true,
+  "gd": {
+    "win": "2.2074",
+    "android": "2.2074",
+    "mac": "2.2074",
+    "ios": "2.2074"
+  },
+
+  "version": "v0.0.1",
+  "id": "tabz.rust-ps",
+  "name": "RustGDPS",
+  "developers": ["Tabz"],
+  "description": "The RustGDPS customization mod!",
+
+  "links": {
+    "community": "https://t.me/RusDashChat",
+    "homepage": "https://rd.ps.fhgdps.com"
+  },
+  "tags": ["gameplay", "interface", "customization"],
+
+  "api": {
+    "include": ["include/*.hpp"]
+  },
+  "resources": {
+    "files": ["resources/*"]
+  },
+
+  "settings": {
+    "REMOVE_UI": {
+      "name": "TurnON",
+      "description": "Turns mod's binaries on.",
+      "type": "bool",
+      "default": true,
+      "enable-if": "tabz.rust-ps",
+      "enable-if-description": ""
+    }
+  }
+}
